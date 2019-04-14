@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Terraria;
 using TerrariaApi.Server;
 using TShockAPI;
@@ -16,7 +17,7 @@ namespace BWL_RW
         public override string Author => "LuoCloud";
         public override string Description => "A better whitelist plugin!";
         public override string Name => "BetterWhitelist";
-        public override Version Version => new Version(1, 0);
+        public override Version Version => new Version(1, 1);
         public  string ConfigPath { get { return Path.Combine(TShock.SavePath, "BetterWhitelist.json"); } }
         public string pname = "[BetterWhitelist]";
         public List<string> userNames = new List<string>();
@@ -26,6 +27,7 @@ namespace BWL_RW
             //钩子注册
             ServerApi.Hooks.ServerJoin.Register(this, OnJoin);
             Commands.ChatCommands.Add(new Command("bwl.use", betterwhitelist, "bwl"));
+            //检测白名单配置文件是否存在
             if (!File.Exists(ConfigPath))
             {
                 userNames.Add("example");
@@ -33,15 +35,22 @@ namespace BWL_RW
                 plr.UserNames = userNames.ToArray();
                 File.WriteAllText(ConfigPath,JsonConvert.SerializeObject(plr,Formatting.Indented));
             }
+            else//存在，执行读取
+            {
+                Players ply = JsonConvert.DeserializeObject<Players>(File.ReadAllText(ConfigPath));
+                userNames = ply.UserNames.ToList();
+            }
     }
 
         private void betterwhitelist(CommandArgs args)
         {
+            //new一个对象进行配置文件的序列化以及数据操作
             Players players = JsonConvert.DeserializeObject<Players>(File.ReadAllText(ConfigPath));
             switch (args.Parameters[0])
             {
                 
                 case "true":
+                    //检测配置文件中的Enabled是否为true
                     if (players.Enabled == false)
                     {
                         players.Enabled = true;
@@ -53,6 +62,7 @@ namespace BWL_RW
                     }
                     break;
                 case "false":
+                    //检测配置文件中的Enabled是否为false
                     if (players.Enabled == true)
                     {
                         players.Enabled = false;
@@ -65,6 +75,7 @@ namespace BWL_RW
                     }
                     break;
                 case "help":
+                    //给玩家显示help
                     if (players.Enabled == false)
                     {
                         args.Player.SendErrorMessage("{0}插件处于关闭状态，输入/bwl true 来开启", pname);
@@ -74,6 +85,7 @@ namespace BWL_RW
                     }
                     break;
                 case "list":
+                    //给玩家列出白名单里的用户名
                     if (players.Enabled == false)
                     {
                         args.Player.SendErrorMessage("{0}插件处于关闭状态，输入/bwl true 来开启", pname);
@@ -87,6 +99,7 @@ namespace BWL_RW
                     }
                     break;
                 case "add":
+                    //添加玩家昵称至白名单
                     if (players.Enabled == false)
                     {
                         args.Player.SendErrorMessage("{0}插件处于关闭状态，输入/bwl true 来开启", pname);
@@ -107,6 +120,7 @@ namespace BWL_RW
                     }
                     break;
                 case "del":
+                    //删除玩家在白名单里的昵称
                     if (players.Enabled == false)
                     {
                         args.Player.SendErrorMessage("{0}插件处于关闭状态，输入/bwl true 来开启", pname);
@@ -140,10 +154,13 @@ namespace BWL_RW
         }
         private void OnJoin(JoinEventArgs args)
         {
+            //new 一个对象进行字段判断以及数据操作
             Players players = JsonConvert.DeserializeObject<Players>(File.ReadAllText(ConfigPath));
             TSPlayer ts = TShock.Players[args.Who];
+            //判断Enabled属性是否开启，否就关闭插件
             if (!players.Enabled==false)
             {
+                //判断userNames列表中是否包含玩家昵称,是就允许进入服务器
                 if (!userNames.Contains(ts.Name))
                 {
                     ts.Disconnect("未在服务器白名单中");
