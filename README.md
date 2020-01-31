@@ -11,8 +11,8 @@
 #### 指令&权限
 
 /bwl help 展示帮助页
-/bwl add [Name] 添加该名字的玩家进白名单
-/bwl del [Name] 删除该玩家的白名单
-/bwl true       打开插件
-/bwl false      关闭插件
-/bwl reload     重载插件
+<br>/bwl add [Name] 添加该名字的玩家进白名单
+<br>/bwl del [Name] 删除该玩家的白名单
+<br>/bwl true       打开插件
+<br>/bwl false      关闭插件
+<br>/bwl reload     重载插件
